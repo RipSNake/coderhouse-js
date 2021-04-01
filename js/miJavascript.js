@@ -6,49 +6,35 @@
 *
 *	---------------------------------
 *
-*	PRIMERA ENTREGA
 *
-*	Sugerencia: Verificar Rúbrica
 *
-*	Objetivos Generales:
-*		1) Codificar la funcionalidad inicial del simulador
-*		2) Identificar el flujo de trabajo del script en terminos de captura de entradas ingresadas
-*		por el usuario, procesamiento esencial del simulador y notificacion de resultados en forma
-*		de salida.
-*
-*	Objetivos Especificos:
-*		1) Capturar entradas mediante prompt()
-*		2) Declarar variables y objetos necesarios para simular el proceso seleccionado
-*		3) Crear funciones y/o metodos para realizar operaciones (Suma, Resta, Concatenar, etc)
-*		4) Efectuar una salida que es el resultado de los datos procesados, la cual puede hacerse por
-*		alert() o por console.log().
-*
-*	Se debe Entregar:
-*		Estructura HTML del proyecto
-*		Variables JS necesarias
-*		Funciones Esenciales del proceso a simular
-*		Objetos JS
-*
-*/
-
 /////////////////
 // Incorporar LocalStorage para guardar el usuario que esta logueado en el navegador
 // y recuperarlo cada vez que se inicia la ventana
 ////////////////
-
-window.onload = function() {
+*/
+// log in console when DOM is ready for correct manipulation
+$(document).ready(function() {
+	console.log('DOM is ready for manipulation');
+});
+// the next fn executes once the windows is loaded (imgs, etc)
+window.addEventListener('load', function(event) {
+	console.log(event);
 	console.log('index.js working');
 	agregarProductoRandom(20);
 	mostrarProductos(productosList);
-};
+
+	// Retrieves the last user loggedIn if the information is saved in the localStorage
+	retrieveLastSession();
+});
 
 
-/* Simulador de Carro de compras */
+/* Cart Simulator */
 
-/*****************CONTRUCTORES OBJETOS********************/
+/*****************OBJECT CLASSES********************/
 
 
-// Constructor de Usuarios
+// User Class
 class Usuario {
 	constructor(nombre,email,password) {
 		this.id = asignarIdUsuario();
@@ -191,7 +177,7 @@ class Carro {
 	getPrecioTotal() {
 		let total = 0;
 		for(let prod of this.productos) {
-			total += prod.price;
+			total += prod.producto.precio;
 		}
 		return total;
 	}
@@ -201,9 +187,10 @@ class Carro {
 			console.log('No se puede completar la acción el carro ya fue vendido');
 		} else {
 			if(producto.estaALaVenta()){
-				this.productos.push({producto, cantidad});	
-			}
+				this.productos.push({producto, 'cantidad': cantidad});	
+			} else {
 				console.log('El producto ya NO esta a la venta');
+			}
 		};
 	};
 	// Quitar producto del carro. Si ya se venció no se puede quitar
@@ -240,6 +227,8 @@ class Carro {
 		if(!this.yaSeVendio()) {
 			this.vendido = true;
 			console.log('Carro Comprado Correctamente');
+			// Prueba de funcionalidad de 'factura'
+			prepararFactura(this);
 		};
 	};
 
@@ -305,13 +294,24 @@ usuariosList.push(new Usuario('Carlos','el_charly@outlook.es','charlando545V'));
 usuariosList.push(new Usuario('Prueba','usuarioprueba@yahoo.com.ar','m1Password'));
 
 // eventListeners
-//document.getElementById('manually-add-prod').addEventListener('click', crearProductoManual);
-document.getElementById('add-product-form').addEventListener('submit', crearProductoPorFormulario);
+$('#signIn').on('click', signIn);
+$('#login').on('click', signIn);
+$('#logout').on('click', logOut);
+$('#show-prod-list').on('click', mostrarProductos);
+$('#show-cart').on('click', verCarro);
+$('#clean-cart').on('click', vaciarCarro);
+$('#buy-cart').on('click', comprarCarro);
+$('#sort-by').on('change', ordenarProductos);
+/*
+document.getElementById('signIn').addEventListener('click', signIn);
+document.getElementById('login').addEventListener('click', signIn);
+document.getElementById('logout').addEventListener('click', logOut);
 document.getElementById('show-prod-list').addEventListener('click',mostrarProductos);
 document.getElementById('show-cart').addEventListener('click',verCarro);
-document.getElementById('vaciarCarro').addEventListener('click',vaciarCarro);
-document.getElementById('comprarCarro').addEventListener('click',comprarCarro);
+document.getElementById('clean-cart').addEventListener('click',vaciarCarro);
+document.getElementById('buy-cart').addEventListener('click',comprarCarro);
 document.getElementById('sort-by').addEventListener('change',ordenarProductos);
+*/
 
 // functions
 
@@ -321,12 +321,27 @@ function asignarIdUsuario() {
 
 // funcion autoincrementante que asignar un id unico a cada carro
 function asignarIdCarro() {
-	return (carros.length + 1);
+	return (carros + 1);
 };
 
 function asignarIdProducto() {
 		return (productosList.length + 1);
 };
+// get last user session
+function retrieveLastSession() {
+	if(localStorage.getItem('user') != null) {
+			let u = new Usuario();
+			let usuario = JSON.parse(localStorage.getItem('user'));
+			usuario = Object.assign(u,usuario);
+			for(let i = 0; i < usuario.carros.length; i++) {
+				usuario.carros[i] = Object.assign(new Carro(), usuario.carros[i]);
+				for(let j = 0; j < usuario.carros[i].productos.length; j++) {
+					usuario.carro[i].productos[j] = Object.assign(new Producto, usuario.carro[i].productos[j]);
+				}
+			}
+			logIn(usuario);
+		}
+}
 
 // Funcion de validacion de password
 validarClave = function(password) {
@@ -378,7 +393,7 @@ function crearUsuario() {
 		console.log('Proceso Cancelado');
 	}
 };
-// agregar usuario a la lista de usuarios
+// Add user to the User List
 function agregarUsuario(usuario) {
 	if(usuario != undefined && usuario != null) {
 		for(let usu of usuariosList) {
@@ -392,7 +407,7 @@ function agregarUsuario(usuario) {
 		console.log('ERROR usuario inválido');
 	}
 };
-// quitar un usuario
+// Remove User
 function quitarUsuario(usuario) {
 	for(let usu of usuariosList) {
 		if(usu === usuario) {
@@ -400,7 +415,7 @@ function quitarUsuario(usuario) {
 		}
 	}
 };
-// quitar un usuario por email
+// Remove User by email
 function quitarUsuario(usuario_email) {
 	for(let usu of usuariosList) {
 		if(usu.id === usuario_email) {
@@ -409,29 +424,48 @@ function quitarUsuario(usuario_email) {
 		}
 	}
 };
-// logear con un usuario
+// User Login
 function logIn(usuario) {
 	usuarioLogueado = usuario;
+	document.getElementById('username').innerText = usuarioLogueado.nombre;
 	alert('Usuario '+usuarioLogueado.nombre+' logueado correctamente');
 	activarControles();
+	if( localStorage.getItem('user') == null ) {
+		localStorage.setItem('user', JSON.stringify(usuario));
+	};
+	updateCartItems();
 };
-// deslogearse
+/*
+// User login form prompt
+function logInPrompt() {
+	let initialDiv = '<div class="container"><form>'
+	let usernameInput = '<div class="form-group row"><label class="col-4" for="username">Username</label><input class="col-8 form-control" type="text" name="username" /></div>';
+	let passInput = '<div class="from-group row"><label class="col-4" for="password">Password</label><input class="col-8 form-control" type="password" name="password"/></div>';
+	let fin = '<button type="submit" onClick="">Login</button></form></div>';
+	let form = document.createElement('div').innerHTML = initialDiv+usernameInput+passInput+fin;
+	document.getElementsByTagName('body').appendChild(form);
+}
+*/
+// User logout
 function logOut() {
 	if(confirm('Esta seguro que desea desloguearse?')) {
 		console.log('Usted ha sido deslogueado correctamente');
 		usuarioLogueado = undefined;
+		document.getElementById('username').innerText = 'User Name';
 		desactivarControles();
+		localStorage.removeItem('user');
+		updateCartItems();
 	} else {
 		console.log('Gracias por continuar con nosotros');
 	}
 }
-// crea un usuario nuevo y lo loguea
+// Creates a new User and logs in
 function signIn() {
 	if(!estaLogueado()) {
-		let usuario = crearUsuario();
-		if(confirm('Desea loguearse para comenzar a operar en Boutique JShop ?')){
+		
+			let usuario = crearUsuario();
 			logIn(usuario);
-		}
+		
 	} else {
 		alert(`Ya está logeado como ${usuarioLogueado.nombre}`);
 	}
@@ -444,12 +478,20 @@ function estaLogueado(){
 		return true;
 	}
 }
+// Update cart products in the view
+function updateCartItems() {
+	if(usuarioLogueado.getCarroActivo() != undefined) {
+		document.getElementById('cart-items').innerText = usuarioLogueado.getCarroActivo().cantidadProductos();
+	} else {
+		document.getElementById('cart-items').innerText = 0;
+	}
+};
 // activar controles de carga de productos manuales y ver carro
 function activarControles() {
 	if(estaLogueado()) {
-		let formFieldset = document.getElementById('add-product-form').getElementsByTagName('fieldset')[0];
+		
 		let cartControls = document.getElementById('cart-controls');
-		formFieldset.disabled = false;
+		
 		cartControls.disabled = false;
 	} else {
 		console.log('No esta Logueado');
@@ -458,31 +500,26 @@ function activarControles() {
 // desactivar controles
 function desactivarControles() {
 	if(!estaLogueado()) {
-		let formFieldset = document.getElementById('add-product-form').getElementsByTagName('fieldset')[0];
+		
 		let cartControls = document.getElementById('cart-controls');
-		formFieldset.disabled = true;
+		
 		cartControls.disabled = true;
 	} else {
 		console.log('Usuario aun Logueado');
 	}
 }
 
-// crear un producto a traves de un formulario
-function crearProductoPorFormulario(event) {
-	event.preventDefault();
-
-}
-
 // comprar producto
 function comprarProducto(event) {
-	console.log(event.srcElement.prodId);
+	let id = event.target.id.slice(3);
+	console.log('Comprar producto id: ',id);
 	if(estaLogueado()) {
-		for(let prod of productosList) {
-			if(event.srcElement.prodId == prod.id) {
-				usuarioLogueado.getCarroActivo().agregarProducto(prod,1);		
+		for(let p of productosList) {
+			if(id == p.id) {
+				usuarioLogueado.getCarroActivo().agregarProducto(p,1);
+				updateCartItems();		
 			}
 		}
-		
 	} else {
 		console.log('No hay usuario logueado para realizar la compra');
 	}
@@ -492,11 +529,28 @@ function comprarProducto(event) {
 
 // genera un cuadro donde se aloja cada uno de los productos disponibles de la tienda
 function mostrarProductos() {
+	$('#cart').addClass('hide');
 	limpiarVistaCarro();
 	limpiarVistaProductos();
-	let visualPanel = document.getElementById('prod-list');
+	let visualPanel = $('#prod-list');
 	for(let prod of productosList) {
 		// contenedor individual de cada producto
+		$('#prod-list').append(`
+			<div class="col-sm-6">
+				<div class="card col-12">
+					<div class="card-body">
+						<span style="display: none;">${prod.id}</span>
+						<h3 class="card-title">${prod.nombre}</h3>
+						<p class="card-subtitle">${prod.marca}</p>
+						<p class="card-text">${prod.precio}</p>
+						<p>Disponible: ${prod.disponible}</p>
+						<button class="btn btn-primary" id="btn${prod.id}">COMPRAR</button>
+					</div>
+				</div>
+			</div>`);
+
+		$(`#btn${prod.id}`).on('click', comprarProducto);
+		/*
 		let card = document.createElement('div');
 		card.classList.add('card');
 		card.classList.add('col-12');
@@ -528,6 +582,9 @@ function mostrarProductos() {
 			disponible.appendChild(document.createTextNode('AGOTADO'));
 			disponible.classList.add('agotado');
 		}
+		// Select quantity
+
+		// Add buy button
 		let comprar = document.createElement('button');
 		comprar.classList.add('btn');
 		comprar.classList.add('btn-primary');
@@ -548,8 +605,8 @@ function mostrarProductos() {
 		div.appendChild(card);
 		// agrega el contenedor del producto a la vista
 		visualPanel.appendChild(div);
+		*/
 	};
-	console.log('Productos cargados a la vista');
 };
 
 // eliminar elementos de la vista de productos para insertar los nuevos
@@ -563,7 +620,6 @@ function limpiarVistaProductos() {
 
 // cambiar orden de los productos
 function ordenarProductos(events) {
-	console.log('Ordenar!');
 	switch(events.srcElement.value) {
 		case 'descend':
 			productosList.sort(ordenPorMayorPrecio);
@@ -572,7 +628,7 @@ function ordenarProductos(events) {
 			productosList.sort(ordenPorMenorPrecio);
 			break;
 		default:
-			console.log('Orden no especificado');
+			// nothing
 			break;
 	}
 	mostrarProductos();
@@ -602,16 +658,16 @@ function ordenPorMayorPrecio(a, b) {
 // Funciones de la vista del carro de compras
 // verCarro() muestra la lista de productos que hay en el carro actual
 function verCarro() {
-	
+	document.getElementById('cart').classList.remove('hide');
 	if(estaLogueado()) {
 		limpiarVistaProductos();
 		limpiarVistaCarro();
-		//carroActivo = usuarioLogueado.getCarroActivo();
-		let carro = document.getElementById('carro-list');
-		console.log(usuarioLogueado.getCarroActivo().productos);
-		for(let prod of usuarioLogueado.getCarroActivo().productos) {
-			console.log(prod);
-			carro.appendChild(mostrarProductosCarro(prod.producto));
+		if(usuarioLogueado.getCarroActivo().cantidadProductos() > 0) {
+			for(let prod of usuarioLogueado.getCarroActivo().productos) {
+				$('#cart-list').append(mostrarProductosCarro(prod));
+			}
+		} else {
+			$('#cart-list').append('<div class="row"><p class="col">CARRO VACIO</p></div>');
 		}
 	} else {
 		alert('Primero debe iniciar sesión');
@@ -619,40 +675,17 @@ function verCarro() {
 };
 
 function mostrarProductosCarro(producto) {
-	let prodCarro = document.createElement('div');
-	prodCarro.classList.add('row');
-	// img display
-	//let img = document.createElement('img');
-	//img.classList.add('col-2');
-	//img.setAttribute('src',producto.img);
-	// nombre
-	let nombre = document.createElement('h5');
-	nombre.classList.add('col-4');
-	nombre.appendChild(document.createTextNode(producto.nombre));
-	// marca
-	let marca = document.createElement('p');
-	marca.classList.add('col-2');
-	marca.appendChild(document.createTextNode(producto.marca));
-	// precio
-	let precio = document.createElement('p');
-	precio.classList.add('col-4');
-	precio.appendChild(document.createTextNode(producto.precio));
-	// cantidad
-	let cantidad = document.createElement('p');
-	cantidad.classList.add('col-2');
-	cantidad.appendChild(document.createTextNode(producto.cantidad));
-
-	//prodCarro.appendChild(img);
-	prodCarro.appendChild(nombre);
-	prodCarro.appendChild(marca);
-	prodCarro.appendChild(precio);
-	prodCarro.appendChild(cantidad);
-
-	return prodCarro;
+	let p = producto.producto;
+	return element = `<div class="row">
+		<h5 class="col-4">${p.nombre}</h5>
+		<p class="col-2">${p.marca}</p>
+		<p class="col-4">${p.precio}</p>
+		<p class="col-2">${producto.cantidad}</p>
+	</div>`;
 };
 
 function limpiarVistaCarro() {
-	let carroList = document.getElementById('carro-list');
+	let carroList = document.getElementById('cart-list');
 	while(carroList.firstChild) {
 		carroList.removeChild(carroList.lastChild);
 	};
@@ -662,6 +695,7 @@ function limpiarVistaCarro() {
 function vaciarCarro() {
 	if(usuarioLogueado.getCarroActivo()){
 		usuarioLogueado.getCarroActivo().vaciarCarro();
+		updateCartItems();
 	}
 };
 
@@ -732,3 +766,17 @@ function agregarProductoRandom(cantidad) {
 		productosList.push(prod);
 	}
 }
+
+// Preparar factura
+function prepararFactura(carro) {
+	let details = `<header><h1>Boutique JShop</h1><h2>Carro ${carro.id}</h1><h2>Comprador: Usuario ${carro.user_id}</h2><h3>Fecha: ${Date.now()}</h3></header>`;
+	details += '<main><table><tr><th>Nombre</th><th>Marca</th><th>Precio</th><th>cantidad</th><th>Total</th>';
+	for(let p of carro.productos) {
+		details += `<tr><td>${p.producto.nombre}</td><td>${p.producto.marca}</td><td>${p.producto.precio}</td><td>${p.cantidad}</td><td>${(p.producto.precio * p.cantidad).toFixed(2)}</td></tr`;
+	}
+	details += '</table></main>';
+	details += '<footer>Phone: +43215678 Domicilio: Calle Tipeada 24/7</footer>';
+	console.log(details);
+	let bill = new Blob(details,{[details]: 'text/html;charset:utf-8'});
+	saveAs(bill,`factura${carro.user_id}${carro.id}${Date.now()}.html`);
+};
