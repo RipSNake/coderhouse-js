@@ -1,6 +1,6 @@
-
+import Producto from './Producto';
 // Constructor Carro de Compras
-class Carro {
+export default class Cart {
 	constructor(usuario_id) {
 		this.id = asignarIdCarro();
 		this.usuario_id = usuario_id;

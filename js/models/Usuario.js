@@ -1,32 +1,30 @@
-require('Carro');
+import Carro from './Carro';
 
-class Usuario {
-	constructor(nombre,email,password) {
-		this.id = asignarIdUsuario();
-		this.nombre = nombre;
+export default class Usuario {
+	constructor(name,email,password) {
+		this.id = asignUserId();
+		this.name = name;
 		this.email = email;
 		this.password = password;
-		this.carros = [];
-		this.activo = true;
+		this.carts = new Cart[];
+		this.active = true;
 	}
 
-	verId() {
+	getId() {
 		return this.id;
 	};
 
-	verUsuario() {
+	printUser() {
 		console.log(this);
 	};
 
-	cambiarNombre(nombre) {
-		this.nombre = nombre;
-		console.log('Nuevo Nombre: '+this.nombre);
+	changeName(name) {
+		this.name = name;
 	};
 
-	cambiarEmail(email) {
+	changeEmail(email) {
 		if(this.email != email) {
 			this.email = email;
-			console.log('Nuevo Email: '+this.email);
 		}
 	};
 
@@ -100,7 +98,7 @@ class Usuario {
 	// ver carro activo
 	getCarroActivo() {
 		for(let c of carros) {
-			if(!c.yaSeVendio) {
+			if(!c.yaSeVendio()) {
 				return c;
 			};
 		};
@@ -125,7 +123,7 @@ class Usuario {
 	hayCarroActivo() {
 		if(carros.length > 0) {
 			for(let c of this.carros) {
-				if(!c.yaSeVendio) {
+				if(!c.yaSeVendio()) {
 					return true;
 				};
 			};

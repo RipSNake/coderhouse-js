@@ -1,4 +1,4 @@
-
+// importar ASIGNAR ID PRODUCTO // 
 
 // Constructor de Productos
 class Producto {
@@ -42,3 +42,5 @@ class Producto {
 		};
 	};
 };
+
+module.exports = Producto;
